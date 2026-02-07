@@ -1,9 +1,10 @@
 # Import required libraries
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
 import os
+import io
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
@@ -181,9 +182,6 @@ async def optimize_uploaded_image(file: UploadFile = File(...)):
     Optimize an image using FFmpeg for better performance
     """
     try:
-        from fastapi.responses import StreamingResponse
-        import io
-        
         contents = await file.read()
         optimized = image_processor.optimize_image(contents)
         

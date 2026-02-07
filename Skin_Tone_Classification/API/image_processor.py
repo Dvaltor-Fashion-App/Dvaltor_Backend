@@ -10,6 +10,13 @@ import io
 from typing import Tuple, Optional
 import numpy as np
 
+# FFmpeg quality constants
+# qscale values: 1-31 for JPEG (lower is better quality, 2-3 is high quality)
+FFMPEG_HIGH_QUALITY = 2
+FFMPEG_MEDIUM_QUALITY = 3
+# Height value -2 maintains aspect ratio with even pixel dimensions (required by some codecs)
+ASPECT_RATIO_EVEN = -2
+
 
 class ImageProcessor:
     """
@@ -67,7 +74,7 @@ class ImageProcessor:
             stream = ffmpeg.output(
                 stream, 
                 output_path,
-                **{'qscale:v': 2} if output_format == 'jpg' else {}
+                **{'qscale:v': FFMPEG_HIGH_QUALITY} if output_format == 'jpg' else {}
             )
             
             # Run FFmpeg
@@ -109,8 +116,8 @@ class ImageProcessor:
                 stream,
                 output_path,
                 **{
-                    'qscale:v': 3,  # Quality setting for JPEG
-                    'vf': f'scale=w=min(iw\\,{self.max_width}):h=-2'  # Limit width, maintain aspect
+                    'qscale:v': FFMPEG_MEDIUM_QUALITY,  # Medium quality for optimization
+                    'vf': f'scale=w=min(iw\\,{self.max_width}):h={ASPECT_RATIO_EVEN}'  # Limit width, maintain aspect
                 }
             )
             
@@ -184,7 +191,7 @@ class ImageProcessor:
             # Use scale filter with force_original_aspect_ratio for better thumbnail generation
             stream = ffmpeg.filter(stream, 'scale', width, height, force_original_aspect_ratio='decrease')
             stream = ffmpeg.filter(stream, 'pad', width, height, -1, -1, 'black')
-            stream = ffmpeg.output(stream, output_path, **{'qscale:v': 2})
+            stream = ffmpeg.output(stream, output_path, **{'qscale:v': FFMPEG_HIGH_QUALITY})
             
             ffmpeg.run(stream, overwrite_output=True, quiet=True)
             
@@ -250,7 +257,6 @@ class ImageProcessor:
                 'height': int(video_info['height']),
                 'format': video_info.get('codec_name', 'unknown'),
                 'pixel_format': video_info.get('pix_fmt', 'unknown'),
-                'duration': float(probe['format'].get('duration', 0)),
                 'size_bytes': int(probe['format'].get('size', 0))
             }
         finally:
