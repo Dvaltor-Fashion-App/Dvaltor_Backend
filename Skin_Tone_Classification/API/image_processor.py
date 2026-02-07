@@ -181,7 +181,9 @@ class ImageProcessor:
             output_path = tempfile.mktemp(suffix='.jpg')
             
             stream = ffmpeg.input(input_path)
-            stream = ffmpeg.filter(stream, 'scale', f'{width}:{height}')
+            # Use scale filter with force_original_aspect_ratio for better thumbnail generation
+            stream = ffmpeg.filter(stream, 'scale', width, height, force_original_aspect_ratio='decrease')
+            stream = ffmpeg.filter(stream, 'pad', width, height, -1, -1, 'black')
             stream = ffmpeg.output(stream, output_path, **{'qscale:v': 2})
             
             ffmpeg.run(stream, overwrite_output=True, quiet=True)
