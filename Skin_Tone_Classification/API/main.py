@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 from typing import List, Dict
+from image_processor import ImageProcessor
 
 # Initialize the FastAPI app with metadata
 app = FastAPI(
@@ -50,6 +51,9 @@ def hex_to_rgb(hex_code: str) -> List[int]:
 # Add RGB column to dataframe
 df_recommendations['RGB'] = df_recommendations['Hex Code'].apply(hex_to_rgb)
 SKIN_TONE_RGB_LIST = np.array(df_recommendations['RGB'].tolist())
+
+# Initialize FFmpeg-based image processor
+image_processor = ImageProcessor(max_width=1920, max_height=1080, quality=85)
 
 # --- Extract average skin tone from face region ---
 def get_average_skin_color_from_roi(face_roi: np.ndarray) -> List[int] | None:
@@ -95,9 +99,20 @@ def get_recommendation_json(avg_rgb_color: List[int]) -> Dict:
 @app.post("/analyze-fashion/")
 async def detect_and_recommend(file: UploadFile = File(...)):
     contents = await file.read()
-    np_arr = np.frombuffer(contents, np.uint8)
-    original_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)  # Decode image from byte buffer
-
+    
+    try:
+        # Use FFmpeg to preprocess and optimize the image
+        optimized_contents = image_processor.optimize_image(contents)
+        
+        # Decode the optimized image
+        np_arr = np.frombuffer(optimized_contents, np.uint8)
+        original_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    except Exception as e:
+        # Fallback to direct decoding if FFmpeg fails
+        print(f"FFmpeg preprocessing failed, using fallback: {e}")
+        np_arr = np.frombuffer(contents, np.uint8)
+        original_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    
     if original_image is None:
         raise HTTPException(status_code=400, detail="Invalid image file.")
 
@@ -142,5 +157,42 @@ def root():
     return {
         "message": "Welcome to Dvaltor Fashion AI. Upload an image to get personalized fashion color suggestions."
     }
+
+# --- Image info endpoint using FFmpeg ---
+@app.post("/image-info/")
+async def get_image_info(file: UploadFile = File(...)):
+    """
+    Get detailed image information using FFmpeg
+    """
+    try:
+        contents = await file.read()
+        info = image_processor.get_image_info(contents)
+        return JSONResponse(content={
+            "image_info": info,
+            "status": "success"
+        })
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to process image: {str(e)}")
+
+# --- Image optimization endpoint ---
+@app.post("/optimize-image/")
+async def optimize_uploaded_image(file: UploadFile = File(...)):
+    """
+    Optimize an image using FFmpeg for better performance
+    """
+    try:
+        from fastapi.responses import StreamingResponse
+        import io
+        
+        contents = await file.read()
+        optimized = image_processor.optimize_image(contents)
+        
+        return StreamingResponse(
+            io.BytesIO(optimized),
+            media_type="image/jpeg",
+            headers={"Content-Disposition": f"attachment; filename=optimized_{file.filename}"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to optimize image: {str(e)}")
 # --- Run the app using: uvicorn main:app --reload ---
 # Note: Ensure you have the required model files and CSV in the correct paths.
