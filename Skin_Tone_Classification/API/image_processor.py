@@ -52,8 +52,11 @@ class ImageProcessor:
             input_temp.write(input_bytes)
             input_path = input_temp.name
         
+        output_temp = tempfile.NamedTemporaryFile(suffix=f'.{output_format}', delete=False)
+        output_path = output_temp.name
+        output_temp.close()
+        
         try:
-            output_path = tempfile.mktemp(suffix=f'.{output_format}')
             
             # Get image dimensions first
             probe = ffmpeg.probe(input_path)
@@ -107,8 +110,11 @@ class ImageProcessor:
             input_temp.write(input_bytes)
             input_path = input_temp.name
         
+        output_temp = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+        output_path = output_temp.name
+        output_temp.close()
+        
         try:
-            output_path = tempfile.mktemp(suffix='.jpg')
             
             # Optimize with compression
             stream = ffmpeg.input(input_path)
@@ -149,8 +155,11 @@ class ImageProcessor:
             input_temp.write(input_bytes)
             input_path = input_temp.name
         
+        output_temp = tempfile.NamedTemporaryFile(suffix=f'.{target_format}', delete=False)
+        output_path = output_temp.name
+        output_temp.close()
+        
         try:
-            output_path = tempfile.mktemp(suffix=f'.{target_format}')
             
             stream = ffmpeg.input(input_path)
             stream = ffmpeg.output(stream, output_path)
@@ -184,8 +193,11 @@ class ImageProcessor:
             input_temp.write(input_bytes)
             input_path = input_temp.name
         
+        output_temp = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+        output_path = output_temp.name
+        output_temp.close()
+        
         try:
-            output_path = tempfile.mktemp(suffix='.jpg')
             
             stream = ffmpeg.input(input_path)
             # Use scale filter with force_original_aspect_ratio for better thumbnail generation
