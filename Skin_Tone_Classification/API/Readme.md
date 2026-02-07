@@ -1,8 +1,9 @@
-# 🎨✨ Skin Tone Prediction API — Powered by FastAPI & Machine Learning
+# 🎨✨ Skin Tone Prediction API — Powered by FastAPI, Machine Learning & FFmpeg
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Fastest%20Python%20API-green?logo=fastapi)
 ![OpenCV](https://img.shields.io/badge/OpenCV-Image%20Processing-blue?logo=opencv)
+![FFmpeg](https://img.shields.io/badge/FFmpeg-Image%20Optimization-orange?logo=ffmpeg)
 ![License](https://img.shields.io/github/license/ChromaFit-Project/backend_machine_learning?style=flat-square)
 ![Repo Size](https://img.shields.io/github/repo-size/ChromaFit-Project/backend_machine_learning)
 ![Contributions](https://img.shields.io/badge/PRs-Welcome-ff69b4?logo=github)
@@ -14,7 +15,7 @@
 ![Code Style](https://img.shields.io/badge/Code%20Style-PEP8-informational)
 
 > 📷 Upload your face or skin image → 🎯 Detect average skin tone → 🎨 Get the predicted skin tone and its HEX code.  
-> Powered by **Machine Learning** and **OpenCV**, wrapped inside a clean **FastAPI** interface!
+> Powered by **Machine Learning**, **OpenCV**, and **FFmpeg**, wrapped inside a clean **FastAPI** interface!
 
 ---
 
@@ -25,6 +26,9 @@
 - 🎨 Returns closest **HEX Code** & predefined **skin shade label**
 - 📊 Uses **Euclidean distance** for accurate shade matching
 - ⚡ Fast, asynchronous, developer-friendly API with **FastAPI**
+- 🎬 **FFmpeg integration** for advanced image preprocessing and optimization
+- 🖼️ Automatic image normalization and format conversion
+- 📉 Smart image compression for faster processing
 - 🔁 Cleans up uploaded files automatically
 - 📂 Clean, modular project structure
 
@@ -36,6 +40,7 @@
 skin-tone-api/
 │
 ├── main.py                      # 🔥 FastAPI app logic
+├── image_processor.py           # 🎬 FFmpeg-based image processing utilities
 ├── requirements.txt             # 📦 Dependency list
 │
 ├── Models/                      # 🧠 Trained ML model files
@@ -80,26 +85,81 @@ uvicorn main:app --reload
 
 ---
 
-## 📡 API Endpoint – `/predict/`
+## 📡 API Endpoints
 
-### 🔸 `POST` request with an image:
+### 🔸 `POST /analyze-fashion/`
 
-* **Form field**: `file` (image file: JPG, PNG)
+Main endpoint for skin tone detection and fashion recommendations with FFmpeg preprocessing.
+
+* **Form field**: `file` (image file: JPG, PNG, WEBP, etc.)
 * **Returns JSON** with:
-
-  * Predicted Skin Tone Label
-  * HEX Color Code
-  * Average RGB Value
+  * Detected face coordinates
+  * Average RGB skin color
+  * Closest matching skin tone
+  * Recommended fashion colors (up to 20)
 
 📤 **Sample Response**:
 
 ```json
 {
-  "Predicted Skin Tone": "Light Skin",
-  "Predicted HEX Code": "#F2C9B1",
-  "Average RGB Color": [242, 200, 180]
+  "image_analysis_results": [
+    {
+      "face_details": {
+        "box_coordinates": [150, 100, 350, 300],
+        "confidence": 0.98
+      },
+      "fashion_recommendation": {
+        "detected_average_rgb": [210, 180, 160],
+        "closest_skin_tone": {
+          "description": "Light Medium Skin",
+          "hex_code": "#E3A58D"
+        },
+        "recommended_colors": [
+          {"name": "Navy Blue", "hex": "#000080"},
+          {"name": "Emerald Green", "hex": "#50C878"}
+        ]
+      }
+    }
+  ]
 }
 ```
+
+### 🔸 `POST /image-info/`
+
+Get detailed image information using FFmpeg probe.
+
+* **Form field**: `file` (image file)
+* **Returns JSON** with:
+  * Image dimensions (width, height)
+  * Format and pixel format
+  * File size
+  * Duration
+
+📤 **Sample Response**:
+
+```json
+{
+  "image_info": {
+    "width": 1920,
+    "height": 1080,
+    "format": "jpeg",
+    "pixel_format": "yuvj420p",
+    "size_bytes": 245678
+  },
+  "status": "success"
+}
+```
+
+### 🔸 `POST /optimize-image/`
+
+Optimize and compress an image using FFmpeg.
+
+* **Form field**: `file` (image file)
+* **Returns**: Optimized JPEG image file
+* **Features**:
+  - Automatic compression
+  - Size reduction
+  - Format normalization
 
 ---
 
@@ -130,6 +190,7 @@ uvicorn main:app --reload
 * 🧠 `Scikit-learn` – ML modeling
 * ⚡ `FastAPI` – Web framework
 * 📸 `OpenCV` – Image processing
+* 🎬 `FFmpeg` – Advanced image/video processing
 * 🐍 `Python 3.8+` - Python Language
 * 📊 `Pandas / NumPy` – Data operations
 * 💾 `Joblib` – Model serialization
